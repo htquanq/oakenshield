@@ -64,6 +64,7 @@ check_commands(){
         [ ! -x $SLEEP ] && close_on_error "Executalbe $SLEEP not found."
         [ ! -x $FIND ] && close_on_error "Executable $FIND not found."
         [ ! -x $MYSQLADMIN ] && close_on_error "Executable $MYSQLADMIN not found."
+        [ ! -x $SCP ] && close_on_error "Executable $SCP not found."
 }
 
 check_mysql_connection(){
@@ -74,7 +75,7 @@ check_mysql_connection(){
 
 sftp_backup(){
         cd $FILEPATH
-        ${SCP} -P ${SFTP_PORT}  "$FILE_NAME" ${SFTP_USERNAME}@${SFTP_HOST}:${SFTP_UPLOAD_DIR}/
+        ${SCP} -P ${SFTP_PORT}  "$BACKUPFILE" ${SFTP_USERNAME}@${SFTP_HOST}:${SFTP_UPLOAD_DIR}/
 }
 
 #main
@@ -82,3 +83,4 @@ check_config
 check_commands
 check_mysql_connection
 db_backup
+sftp_backup
