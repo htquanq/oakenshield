@@ -1,0 +1,37 @@
+### MYSQL Database Server Details        					 
+
+MYSQL_HOST="localhost"
+MYSQL_PORT="3306"
+
+### Mysql user credetials - path to file
+
+MYSQL_CRE=credentials
+
+###  	 Local Database Backup Path						 		 
+
+LOCAL_BACKUP_DIR=/data/capstone1/oakenshield/backup
+TMP_PATH=/tmp
+LOG_PATH=/tmp/backup
+
+###		  MySQL Databases Names to Backup      					 
+
+DB_NAMES=("test" "ezpz")    ### Backup specified databases - array
+
+###  	SFTP Backup		         						 
+
+SFTP_HOST=""
+SFTP_USERNAME=""
+SFTP_PORT="22"
+SFTP_UPLOAD_DIR="/backup/dbbackup/"
+SCP="/usr/bin/scp"
+
+###  	 Local Executables Path		     						 
+
+GZIP="/bin/gzip"
+MYSQL="/usr/bin/mysql"
+MYSQLDUMP="/usr/bin/mysqldump"
+MKDIR="/bin/mkdir"
+GREP="/bin/grep"
+SLEEP="/bin/sleep"
+FIND="/usr/bin/find"
+MYSQLADMIN="/usr/bin/mysqladmin"
