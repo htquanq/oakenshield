@@ -9,9 +9,9 @@ MYSQL_CRE=credentials
 
 ###  	 Local Database Backup Path						 		 
 
-LOCAL_BACKUP_DIR=/data/capstone1/oakenshield/backup
-TMP_PATH=/tmp
-LOG_PATH=/tmp/backup
+LOCAL_BACKUP_DIR=
+TMP_PATH=
+LOG_PATH=
 
 ###		  MySQL Databases Names to Backup      					 
 
@@ -22,7 +22,7 @@ DB_NAMES=("test" "ezpz")    ### Backup specified databases - array
 SFTP_HOST=""
 SFTP_USERNAME=""
 SFTP_PORT="22"
-SFTP_UPLOAD_DIR="/backup/dbbackup/"
+SFTP_UPLOAD_DIR=""
 SCP="/usr/bin/scp"
 
 ###  	 Local Executables Path		     						 
