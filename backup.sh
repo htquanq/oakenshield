@@ -25,25 +25,23 @@ db_backup(){
         if [ ! -d "${FILEPATH}" ]; then
                 $MKDIR -p ${FILEPATH}
         fi
+        #Prevent database is being written while perform backup 
+        $MYSQL ${CREDENTIALS} -Ae"FLUSH TABLES WITH READ LOCK;"
 
         for database in "${DB_NAMES[@]}"
         do
         FILENAME="${database}_${cTime}.gz"
         BACKUPFILE="$FILEPATH$FILENAME"
-        if [ ! -f "${BACKUPFILE}" ]; then
-                #Prevent database is being written while perform backup 
-                $MYSQL ${CREDENTIALS} -Ae"FLUSH TABLES WITH READ LOCK;"
+        if [ ! -f "${BACKUPFILE}" ]; then   
                 $SLEEP 5
                 #Backup file then compress it
                 $MYSQLDUMP ${CREDENTIALS} --single-transaction --host=$MYSQL_HOST --port=$MYSQL_PORT "$database" | ${GZIP} -9 > $BACKUPFILE
 
-                #Enable database to be written in
-                $MYSQL ${CREDENTIALS} -Ae"UNLOCK TABLES;"
-
                 #Write to log file
                 echo "$database   :: `du -sh ${BACKUPFILE}`"  >> ${LOGFILENAME}
         fi
-
+        #Enable database to be written in
+        $MYSQL ${CREDENTIALS} -Ae"UNLOCK TABLES;"
         #Delete backup file that is more than 30 days old
         #$FIND "$path" -type f -mtime +30 -delete
 done
@@ -75,7 +73,7 @@ check_mysql_connection(){
 
 sftp_backup(){
         cd $FILEPATH
-        ${SCP} -P ${SFTP_PORT}  "$BACKUPFILE" ${SFTP_USERNAME}@${SFTP_HOST}:${SFTP_UPLOAD_DIR}/
+        ${SCP} -P ${SFTP_PORT} "$BACKUPFILE" ${SFTP_USERNAME}@${SFTP_HOST}:${SFTP_UPLOAD_DIR}/
 }
 
 #main
