@@ -20,7 +20,7 @@ check_config(){
         [ ! -f $CONFIGFILE ] && close_on_error "Config file not found, make sure config file is correct"
 }
 
-db_backup(){
+mysql_backup(){
         FILEPATH="${LOCAL_BACKUP_DIR}/${cTime}/"
         if [ ! -d "${FILEPATH}" ]; then
                 $MKDIR -p ${FILEPATH}
@@ -42,8 +42,6 @@ db_backup(){
         fi
         #Enable database to be written in
         $MYSQL ${CREDENTIALS} -Ae"UNLOCK TABLES;"
-        #Delete backup file that is more than 30 days old
-        #$FIND "$path" -type f -mtime +30 -delete
 done
 
 }
@@ -63,6 +61,7 @@ check_commands(){
         [ ! -x $FIND ] && close_on_error "Executable $FIND not found."
         [ ! -x $MYSQLADMIN ] && close_on_error "Executable $MYSQLADMIN not found."
         [ ! -x $SCP ] && close_on_error "Executable $SCP not found."
+        [ ! -x $FIND ] && close_on_error "Executable $FIND not found".
 }
 
 check_mysql_connection(){
@@ -76,9 +75,15 @@ sftp_backup(){
         ${SCP} -P ${SFTP_PORT} "$BACKUPFILE" ${SFTP_USERNAME}@${SFTP_HOST}:${SFTP_UPLOAD_DIR}/
 }
 
+clean_backup(){
+        #Delete backup file that is more than 30 days old
+        $FIND "$FILEPATH" -type f -mtime +30 -delete
+}
+
 #main
 check_config
 check_commands
 check_mysql_connection
-db_backup
+mysql_backup
 sftp_backup
+clean_backup
