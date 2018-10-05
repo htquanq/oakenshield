@@ -27,6 +27,6 @@ if __name__=="__main__":
 	nics=all_nics()
 	for interface in nics:
 		th = threading.Thread(
-            target=sniff(iface=interface, prn=pkt_callback, filter="tcp", store=0)
-        )
+      target=sniff(iface=interface, prn=pkt_callback, filter="tcp", store=0)
+    )
 		th.start()
