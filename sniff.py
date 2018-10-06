@@ -1,5 +1,6 @@
 from scapy.all import *
 import netifaces, threading, logging
+from sniff_log import *
 
 def all_nics():
 	return netifaces.interfaces()
