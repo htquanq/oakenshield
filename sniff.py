@@ -2,6 +2,11 @@ from scapy.all import *
 import netifaces, threading, logging, time
 import logging.handlers as handlers
 
+LOG_DIR= "/tmp/"
+DATE=time.strftime("/%Y/%m/")
+LOG_FILE= time.strftime("%d.log")
+INTERFACE=""
+
 def all_nics():
 	return netifaces.interfaces()
 
@@ -19,35 +24,37 @@ def pkt_callback(pkt):
 		tcp_dport=pkt[TCP].dport
 	if TCP in pkt:
 		data=pkt[TCP].payload
-	log_to_file("/tmp/test/test.log",ip_src + str(data), "sqli")
+	log_to_file(INTERFACE, ip_dst + str(data), "sqli")
 
 def create_log_folder(interface):
-	path = "/tmp/" + interface +time.strftime("/%Y/%m/")
+	path = LOG_DIR + str(interface) + DATE
 	if not os.path.exists(path):
 		os.makedirs(path)
-	if not os.path.isfile(path+time.strftime("%d.log")):
-		file = open(path+time.strftime("%d.log"), "w+")
+	if not os.path.isfile(path+LOG_FILE):
+		file = open(path+LOG_FILE, "w+")
 
-def log_to_file(path,payload,name):
+def log_to_file(interface,payload,name):
+	path = LOG_DIR + str(interface) + DATE + LOG_FILE
     # Set event log name
-    logger = logging.getLogger(name)
+	logger = logging.getLogger(name)
     # Set log format
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
+	formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
     # Set log file
-    fh = logging.FileHandler(path)
+	fh = logging.FileHandler(path)
     # Set log level
-    fh.setLevel(logging.WARN)
+	fh.setLevel(logging.WARN)
     # Set log format
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
+	fh.setFormatter(formatter)
+	logger.addHandler(fh)
     # Generate log data
-    logger.warn(payload)
+	logger.warn(payload)
 
 if __name__=="__main__":
 	nics=all_nics()
 	for interface in nics:
-		create_log_folder(str(interface))
-		#th = threading.Thread(
-      #target=sniff(iface=interface, prn=pkt_callback, filter="tcp", store=0)
-    #)
-	#	th.start()
+		INTERFACE=str(interface)
+		create_log_folder(INTERFACE)
+		th = threading.Thread(
+      		target=sniff(iface=INTERFACE, prn=pkt_callback, filter="tcp", store=0)
+    	)
+		th.start()
