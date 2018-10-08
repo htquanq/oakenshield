@@ -24,6 +24,7 @@ SFTP_USERNAME=""
 SFTP_PORT="22"
 SFTP_UPLOAD_DIR=""
 SCP="/usr/bin/scp"
+IDENTITY_FILE=""
 
 ###  	 Local Executables Path		     						 
 

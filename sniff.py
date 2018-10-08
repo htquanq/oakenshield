@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from scapy.all import *
 import netifaces, threading, logging, time
 import logging.handlers as handlers
@@ -22,9 +24,10 @@ def pkt_callback(pkt):
 	if TCP in pkt:
 		tcp_sport=pkt[TCP].sport
 		tcp_dport=pkt[TCP].dport
-	if TCP in pkt:
 		data=pkt[TCP].payload
-	log_to_file(INTERFACE, ip_dst + str(data), "sqli")
+		if "OR%20" in str(data):
+			message = ip_src + " -> " + ip_dst + str(data)
+			log_to_file(INTERFACE, message, "sqli")
 
 def create_log_folder(interface):
 	path = LOG_DIR + str(interface) + DATE

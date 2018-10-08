@@ -72,7 +72,7 @@ check_mysql_connection(){
 
 sftp_backup(){
         cd $FILEPATH
-        ${SCP} -P ${SFTP_PORT} "$BACKUPFILE" ${SFTP_USERNAME}@${SFTP_HOST}:${SFTP_UPLOAD_DIR}/
+        ${SCP} -i ${IDENTITY_FILE} -P ${SFTP_PORT} "$BACKUPFILE" ${SFTP_USERNAME}@${SFTP_HOST}:${SFTP_UPLOAD_DIR}/
 }
 
 clean_backup(){
