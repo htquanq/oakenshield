@@ -24,10 +24,11 @@ def pkt_callback(pkt):
 	if TCP in pkt:
 		tcp_sport=pkt[TCP].sport
 		tcp_dport=pkt[TCP].dport
-		data=pkt[TCP].payload
-		if "OR%20" in str(data):
-			message = ip_src + " -> " + ip_dst + str(data)
-			log_to_file(INTERFACE, message, "sqli")
+	data=pkt.show()
+	print data
+		#if "OR%20" in str(data):
+	#message = ip_src + " -> " + ip_dst + str(data)
+	#log_to_file(INTERFACE, message, "sqli")
 
 def create_log_folder(interface):
 	path = LOG_DIR + str(interface) + DATE
@@ -53,11 +54,13 @@ def log_to_file(interface,payload,name):
 	logger.warn(payload)
 
 if __name__=="__main__":
-	nics=all_nics()
-	for interface in nics:
-		INTERFACE=str(interface)
-		create_log_folder(INTERFACE)
-		th = threading.Thread(
-      		target=sniff(iface=INTERFACE, prn=pkt_callback, filter="tcp", store=0)
-    	)
-		th.start()
+	#nics=all_nics()
+	#for interface in nics:
+	#	INTERFACE=str(interface)
+	#	create_log_folder(INTERFACE)
+	#	th = threading.Thread(
+    #  		target=sniff(iface=INTERFACE, prn=pkt_callback, filter="", store=0)
+    #	)
+	#	th.start()
+	INTERFACE="lo"
+	sniff(iface=INTERFACE,prn=pkt_callback,filter="", store=0)
