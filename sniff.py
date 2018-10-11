@@ -18,14 +18,16 @@ def pkt_callback(pkt):
 	tcp_sport=""
 	tcp_dport=""
 	data=""
+	flags=""
 	if IP in pkt:
 		ip_src=pkt[IP].src
 		ip_dst=pkt[IP].dst
 	if TCP in pkt:
 		tcp_sport=pkt[TCP].sport
 		tcp_dport=pkt[TCP].dport
-	data=pkt.show()
-	print data
+		flags=pkt[TCP].flags
+	#data=pkt.show()
+	print "%s->%s %s %s %s" % (ip_src, ip_dst,str(pkt.getlayer(TCP).seq),str(pkt.getlayer(TCP).ack),flags)
 		#if "OR%20" in str(data):
 	#message = ip_src + " -> " + ip_dst + str(data)
 	#log_to_file(INTERFACE, message, "sqli")
@@ -63,4 +65,4 @@ if __name__=="__main__":
     #	)
 	#	th.start()
 	INTERFACE="lo"
-	sniff(iface=INTERFACE,prn=pkt_callback,filter="", store=0)
+	sniff(iface=INTERFACE,prn=pkt_callback,filter="tcp port 22 ", store=0)
