@@ -13,14 +13,9 @@ def all_nics():
 	return netifaces.interfaces()
 
 def pkt_callback(pkt):
-	create_log_folder("lo")
-	#ip_src=pkt[IP].src
-	#ip_dst=pkt[IP].dst
-	#flags=pkt[TCP].flags
-	#tcp_sport=pkt[TCP].sport
-	#tcp_dport=pkt[TCP].dport
-	pingOfDeath(pkt)
-	#packet=synScan(ip_src,ip_dst,tcp_dport,tcp_dport,flags,)
+	create_log_folder(INTERFACE)
+	if pkt["IP"].get_field('proto').i2s[pkt.proto] == "icmp":
+		pingOfDeath(pkt)
 
 
 #def synScan(flags, src_ip, dest_port, num):
@@ -29,13 +24,13 @@ def pkt_callback(pkt):
 	#if flags=="SSAR" and num==3:
 
 def pingOfDeath(packet):
-	# Detect ping packet
-	if packet["IP"].get_field('proto').i2s[packet.proto] == "icmp" and packet["IP"].len > 65536:
+	# Detect attempt to perform ping of death base on data size
+	if packet["IP"].len > 1500:
 		ip_src=packet["IP"].src
 		ip_dst=packet["IP"].dst
 		log="%s -> %s Size: %s " %(ip_src, ip_dst, str(packet["IP"].len))
 		name="Ping Of Death"
-		log_to_file("lo",log, name)
+		log_to_file(INTERFACE,log, name)
 
 def create_log_folder(interface):
 	path = LOG_DIR + str(interface) + DATE
