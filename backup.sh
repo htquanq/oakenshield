@@ -52,6 +52,7 @@ close_on_error(){
 }
 
 check_commands(){
+        # Check if executable is existed
         [ ! -x $GZIP ] && close_on_error "Executable $GZIP not found."
         [ ! -x $MYSQL ] && close_on_error "Executable $MYSQL not found."
         [ ! -x $MYSQLDUMP ] && close_on_error "Executable $MYSQLDUMP not found."
