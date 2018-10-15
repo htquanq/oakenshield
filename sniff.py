@@ -13,24 +13,29 @@ def all_nics():
 	return netifaces.interfaces()
 
 def pkt_callback(pkt):
-	ip_src=""
-	ip_dst=""
-	tcp_sport=""
-	tcp_dport=""
-	data=""
-	flags=""
-	if IP in pkt:
-		ip_src=pkt[IP].src
-		ip_dst=pkt[IP].dst
-	if TCP in pkt:
-		tcp_sport=pkt[TCP].sport
-		tcp_dport=pkt[TCP].dport
-		flags=pkt[TCP].flags
-	#data=pkt.show()
-	print "%s->%s %s %s %s" % (ip_src, ip_dst,str(pkt.getlayer(TCP).seq),str(pkt.getlayer(TCP).ack),flags)
-		#if "OR%20" in str(data):
-	#message = ip_src + " -> " + ip_dst + str(data)
-	#log_to_file(INTERFACE, message, "sqli")
+	create_log_folder("lo")
+	#ip_src=pkt[IP].src
+	#ip_dst=pkt[IP].dst
+	#flags=pkt[TCP].flags
+	#tcp_sport=pkt[TCP].sport
+	#tcp_dport=pkt[TCP].dport
+	pingOfDeath(pkt)
+	#packet=synScan(ip_src,ip_dst,tcp_dport,tcp_dport,flags,)
+
+
+#def synScan(flags, src_ip, dest_port, num):
+	# SYN Stealth scan for open port
+	# number of packet=3, flag is SSAR
+	#if flags=="SSAR" and num==3:
+
+def pingOfDeath(packet):
+	# Detect ping packet
+	if packet["IP"].get_field('proto').i2s[packet.proto] == "icmp" and packet["IP"].len > 65536:
+		ip_src=packet["IP"].src
+		ip_dst=packet["IP"].dst
+		log="%s -> %s Size: %s " %(ip_src, ip_dst, str(packet["IP"].len))
+		name="Ping Of Death"
+		log_to_file("lo",log, name)
 
 def create_log_folder(interface):
 	path = LOG_DIR + str(interface) + DATE
@@ -38,6 +43,7 @@ def create_log_folder(interface):
 		os.makedirs(path)
 	if not os.path.isfile(path+LOG_FILE):
 		file = open(path+LOG_FILE, "w+")
+		file.close()
 
 def log_to_file(interface,payload,name):
 	path = LOG_DIR + str(interface) + DATE + LOG_FILE
@@ -65,4 +71,4 @@ if __name__=="__main__":
     #	)
 	#	th.start()
 	INTERFACE="lo"
-	sniff(iface=INTERFACE,prn=pkt_callback,filter="tcp port 22 ", store=0)
+	sniff(iface=INTERFACE,prn=pkt_callback,filter="", store=0)
