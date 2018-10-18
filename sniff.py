@@ -8,6 +8,7 @@ LOG_DIR= "/tmp/"
 DATE=time.strftime("/%Y/%m/")
 LOG_FILE= time.strftime("%d.log")
 INTERFACE=""
+PACKETS=dict()
 
 def all_nics():
 	return netifaces.interfaces()
@@ -16,20 +17,19 @@ def pkt_test(pkt):
 	print pkt.show()
 
 def pkt_callback(pkt):
-	opened = []
-	closed = []
 	create_log_folder(INTERFACE)
 	if pkt["IP"].get_field('proto').i2s[pkt.proto] == "icmp":
-		pingOfDeath(pkt)
+		pingOfDeath(pkt["IP"])
 	# TCP packets
 	# Can be SQLi or Nmap scanner
 	# Detect NMap SYN Stealth scan for opened port and closed port
 	else:
-		src_port = pkt["TCP"].sport
-		dst_port = pkt["TCP"].dport
-		flags = pkt["TCP"].flags
-		seq = pkt["TCP"].seq
-		ack = pkt["TCP"].ack
+		tcp_pkt = pkt["TCP"]
+		src_port = tcp_pkt.sport
+		dst_port = tcp_pkt.dport
+		flags = tcp_pkt.flags
+		seq = tcp_pkt.seq
+		ack = tcp_pkt.ack
 		# First request is SYN
 		# Nmap scan for open port
 		# SYN.seq: n (n is integer)
@@ -37,30 +37,27 @@ def pkt_callback(pkt):
 		# R.seq = n + 1
 
 		#Nmap scan for closed port
-		# SYN.seq
+		# SYN.seq: n (n is integer)
+		# RA.ack: SYN.seq(n) + 1
 		if flags == "S":
-			opened.append(pkt)
-			closed.append(pkt)
-		elif (flags=="SA") and (ack == opened[0]["TCP"].seq + 1) and (src_port == opened[0]["TCP"].dport):
-			opened.append(pkt)
-		elif (flags=="RA") and (ack == opened[0]["TCP"].seq + 1) and (dst_port == closed[0]["TCP"].sport):
-			closed.append(pkt)
-		elif (flags=="R") and (seq == opened[0]["TCP"].seq + 1) and (dst_port == opened[0]["TCP"].dport):
-			opened.append(pkt)
-
-
-#def synScan(flags, src_ip, dest_port, num):
-	# SYN Stealth scan for open port
-	# number of packet=3, flag is SSAR
-	#if flags=="SSAR" and num==3:
+			PACKETS[seq] = tcp_pkt
+		elif (flags=="SA") and (ack - 1 in PACKETS) and (src_port == PACKETS.get(ack - 1).dport):
+			PACKETS[ack] = tcp_pkt
+			PACKETS.pop(ack - 1)
+		elif (flags=="RA") and (ack - 1 in PACKETS) and (dst_port == PACKETS.get(ack - 1).sport):
+			PACKETS.pop(ack - 1)
+			print "Port is close"
+		elif (flags=="R") and (seq in PACKETS) and (src_port == PACKETS[seq].dport):
+			PACKETS.pop(seq)
+			print "Port is open"
 
 def pingOfDeath(packet):
 	# Detect attempt to perform ping of death base on data size
 	# If packet size is more than 1500 bytes, log it
-	if packet["IP"].len > 1500:
-		ip_src=packet["IP"].src
-		ip_dst=packet["IP"].dst
-		log="%s -> %s Size: %s " %(ip_src, ip_dst, str(packet["IP"].len))
+	if packet.len > 1500:
+		ip_src=packet.src
+		ip_dst=packet.dst
+		log="%s -> %s Size: %s " %(ip_src, ip_dst, str(packet.len))
 		name="Ping Of Death"
 		log_to_file(INTERFACE,log, name)
 
@@ -98,4 +95,4 @@ if __name__=="__main__":
     #	)
 	#	th.start()
 	INTERFACE="lo"
-	sniff(iface=INTERFACE,prn=pkt_test,filter="", store=0)
+	sniff(iface=INTERFACE,prn=pkt_callback,filter="", store=0)
