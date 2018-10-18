@@ -23,8 +23,10 @@ def pkt_callback(pkt):
 	# TCP packets
 	# Can be SQLi or Nmap scanner
 	# Detect NMap SYN Stealth scan for opened port and closed port
-	else:
+	elif pkt["IP"].get_field('proto').i2s[pkt.proto] == "tcp":
 		tcp_pkt = pkt["TCP"]
+		src_ip = pkt["IP"].src
+		src_dest = pkt["IP"].dst
 		src_port = tcp_pkt.sport
 		dst_port = tcp_pkt.dport
 		flags = tcp_pkt.flags
@@ -46,10 +48,16 @@ def pkt_callback(pkt):
 			PACKETS.pop(ack - 1)
 		elif (flags=="RA") and (ack - 1 in PACKETS) and (dst_port == PACKETS.get(ack - 1).sport):
 			PACKETS.pop(ack - 1)
-			print "Port is close"
+			log="%s -> %s. Detected SYN Stealth scan for closed port %s." %(src_ip, src_dest, src_port)
+			name="SYN Stealth Scan"
+			log_to_file(INTERFACE, log, name)
 		elif (flags=="R") and (seq in PACKETS) and (src_port == PACKETS[seq].dport):
 			PACKETS.pop(seq)
-			print "Port is open"
+			log="%s -> %s. Detected SYN Stealth scan for opened port %s." % (src_ip, src_dest, dst_port)
+			name="SYN Stealth Scan"
+			log_to_file(INTERFACE, log, name)
+	else:
+		pass
 
 def pingOfDeath(packet):
 	# Detect attempt to perform ping of death base on data size
