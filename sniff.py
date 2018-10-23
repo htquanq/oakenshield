@@ -18,46 +18,47 @@ def pkt_test(pkt):
 
 def pkt_callback(pkt):
 	create_log_folder(INTERFACE)
-	if pkt["IP"].get_field('proto').i2s[pkt.proto] == "icmp":
-		pingOfDeath(pkt["IP"])
-	# TCP packets
-	# Can be SQLi or Nmap scanner
-	# Detect NMap SYN Stealth scan for opened port and closed port
-	elif pkt["IP"].get_field('proto').i2s[pkt.proto] == "tcp":
-		tcp_pkt = pkt["TCP"]
-		src_ip = pkt["IP"].src
-		src_dest = pkt["IP"].dst
-		src_port = tcp_pkt.sport
-		dst_port = tcp_pkt.dport
-		flags = tcp_pkt.flags
-		seq = tcp_pkt.seq
-		ack = tcp_pkt.ack
-		# First request is SYN
-		# Nmap scan for open port
-		# SYN.seq: n (n is integer)
-		# SYN/ACK.ack = n + 1
-		# R.seq = n + 1
+	if IP in pkt:
+		if pkt["IP"].get_field('proto').i2s[pkt.proto] == "icmp":
+			pingOfDeath(pkt["IP"])
+		# TCP packets
+		# Can be SQLi or Nmap scanner
+		# Detect NMap SYN Stealth scan for opened port and closed port
+		elif pkt["IP"].get_field('proto').i2s[pkt.proto] == "tcp":
+			tcp_pkt = pkt["TCP"]
+			src_ip = pkt["IP"].src
+			src_dest = pkt["IP"].dst
+			src_port = tcp_pkt.sport
+			dst_port = tcp_pkt.dport
+			flags = tcp_pkt.flags
+			seq = tcp_pkt.seq
+			ack = tcp_pkt.ack
+			# First request is SYN
+			# Nmap scan for open port
+			# SYN.seq: n (n is integer)
+			# SYN/ACK.ack = n + 1
+			# R.seq = n + 1
 
-		#Nmap scan for closed port
-		# SYN.seq: n (n is integer)
-		# RA.ack: SYN.seq(n) + 1
-		if flags == "S":
-			PACKETS[seq] = tcp_pkt
-		elif (flags=="SA") and (ack - 1 in PACKETS) and (src_port == PACKETS.get(ack - 1).dport):
-			PACKETS[ack] = tcp_pkt
-			PACKETS.pop(ack - 1)
-		elif (flags=="RA") and (ack - 1 in PACKETS) and (dst_port == PACKETS.get(ack - 1).sport):
-			PACKETS.pop(ack - 1)
-			log="%s -> %s. Detected SYN Stealth scan for closed port %s." %(src_ip, src_dest, src_port)
-			name="SYN Stealth Scan"
-			log_to_file(INTERFACE, log, name)
-		elif (flags=="R") and (seq in PACKETS) and (src_port == PACKETS[seq].dport):
-			PACKETS.pop(seq)
-			log="%s -> %s. Detected SYN Stealth scan for opened port %s." % (src_ip, src_dest, dst_port)
-			name="SYN Stealth Scan"
-			log_to_file(INTERFACE, log, name)
-	else:
-		pass
+			#Nmap scan for closed port
+			# SYN.seq: n (n is integer)
+			# RA.ack: SYN.seq(n) + 1
+			if flags == "S":
+				PACKETS[seq] = tcp_pkt
+			elif (flags=="SA") and (ack - 1 in PACKETS) and (src_port == PACKETS.get(ack - 1).dport):
+				PACKETS[ack] = tcp_pkt
+				PACKETS.pop(ack - 1)
+			elif (flags=="RA") and (ack - 1 in PACKETS) and (dst_port == PACKETS.get(ack - 1).sport):
+				PACKETS.pop(ack - 1)
+				log="%s -> %s. Detected SYN Stealth scan for closed port %s." %(src_ip, src_dest, src_port)
+				name="SYN Stealth Scan"
+				log_to_file(INTERFACE, log, name)
+			elif (flags=="R") and (seq in PACKETS) and (src_port == PACKETS[seq].dport):
+				PACKETS.pop(seq)
+				log="%s -> %s. Detected SYN Stealth scan for opened port %s." % (src_ip, src_dest, dst_port)
+				name="SYN Stealth Scan"
+				log_to_file(INTERFACE, log, name)
+		else:
+			pass
 
 def pingOfDeath(packet):
 	# Detect attempt to perform ping of death base on data size
@@ -102,5 +103,5 @@ if __name__=="__main__":
     #  		target=sniff(iface=INTERFACE, prn=pkt_callback, filter="", store=0)
     #	)
 	#	th.start()
-	INTERFACE="lo"
-	sniff(iface=INTERFACE,prn=pkt_callback,filter="", store=0)
+	INTERFACE="wlp10s0"
+	sniff(iface=INTERFACE,prn=pkt_test,filter="", store=0)
