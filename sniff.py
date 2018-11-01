@@ -57,9 +57,16 @@ def pkt_callback(pkt):
 				log="%s -> %s. Detected SYN Stealth scan for opened port %s." % (src_ip, src_dest, dst_port)
 				name="SYN Stealth Scan"
 				log_to_file(INTERFACE, log, name)
-		else:
-			pass
-
+	#Detect sql injection
+	if Raw in pkt:
+		data= pkt["Raw"].load
+		http_method = data.split("\n")[0]
+		if "GET" in http_method:
+			payload = http_method.split(" ")[1]
+		if "POST" in http_method:
+			payload_length=len(data.split("\n"))
+			payload = data.split("\n")[payload_length-1]
+			
 def pingOfDeath(packet):
 	# Detect attempt to perform ping of death base on data size
 	# If packet size is more than 1500 bytes, log it
@@ -103,5 +110,5 @@ if __name__=="__main__":
     #  		target=sniff(iface=INTERFACE, prn=pkt_callback, filter="", store=0)
     #	)
 	#	th.start()
-	INTERFACE="wlp10s0"
-	sniff(iface=INTERFACE,prn=pkt_test,filter="", store=0)
+	INTERFACE="lo"
+	sniff(iface=INTERFACE,prn=pkt_callback,filter="", store=0)
