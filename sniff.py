@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from scapy.all import *
-import netifaces, threading, logging, time
+import netifaces, threading, logging, time, urllib
 import logging.handlers as handlers
 
 LOG_DIR= "/tmp/"
@@ -17,6 +17,9 @@ def all_nics():
 
 def pkt_test(pkt):
 	read_rule()
+
+def url_decode(payload):
+	return urllib.unquote(payload).decode('utf8')
 
 def read_rule():
 	with open(RULE_FILE) as f:
@@ -71,9 +74,16 @@ def pkt_callback(pkt):
 		http_method = data.split("\n")[0]
 		if "GET" in http_method:
 			payload = http_method.split(" ")[1]
+			if payload.startswith("/?"):
+				args=payload.split("/?")[1].split("&")
+				for arg in args:
+					print url_decode(arg).split("=")[1]
+
 		if "POST" in http_method:
 			payload_length=len(data.split("\n"))
-			payload = data.split("\n")[payload_length-1]
+			payload = data.split("\n")[payload_length-1].split("&")
+			for arg in args:
+				print url_decode(arg).split("=")[1]
 			
 def pingOfDeath(packet):
 	# Detect attempt to perform ping of death base on data size
@@ -120,4 +130,4 @@ if __name__=="__main__":
 	#	th.start()
 	INTERFACE="lo"
 	read_rule()
-	sniff(iface=INTERFACE,prn=pkt_test,filter="", store=0)
+	sniff(iface=INTERFACE,prn=pkt_callback,filter="", store=0)
