@@ -5,16 +5,24 @@ import netifaces, threading, logging, time
 import logging.handlers as handlers
 
 LOG_DIR= "/tmp/"
+RULE_FILE="/data/capstone1/oakenshield/rules.txt"
 DATE=time.strftime("/%Y/%m/")
 LOG_FILE= time.strftime("%d.log")
 INTERFACE=""
 PACKETS=dict()
+rules=[]
 
 def all_nics():
 	return netifaces.interfaces()
 
 def pkt_test(pkt):
-	print pkt.show()
+	read_rule()
+
+def read_rule():
+	with open(RULE_FILE) as f:
+		lines = f.readlines()
+		for line in lines:
+			rules.append(line.rstrip("\r\n"))
 
 def pkt_callback(pkt):
 	create_log_folder(INTERFACE)
@@ -59,7 +67,7 @@ def pkt_callback(pkt):
 				log_to_file(INTERFACE, log, name)
 	#Detect sql injection
 	if Raw in pkt:
-		data= pkt["Raw"].load
+		data = pkt["Raw"].load
 		http_method = data.split("\n")[0]
 		if "GET" in http_method:
 			payload = http_method.split(" ")[1]
@@ -111,4 +119,5 @@ if __name__=="__main__":
     #	)
 	#	th.start()
 	INTERFACE="lo"
-	sniff(iface=INTERFACE,prn=pkt_callback,filter="", store=0)
+	read_rule()
+	sniff(iface=INTERFACE,prn=pkt_test,filter="", store=0)
