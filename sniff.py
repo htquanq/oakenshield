@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from scapy.all import *
-import netifaces, threading, logging, time, urllib
+import netifaces, threading, logging, time, urllib, re
 import logging.handlers as handlers
 
 LOG_DIR= "/tmp/"
@@ -16,7 +16,7 @@ def all_nics():
 	return netifaces.interfaces()
 
 def pkt_test(pkt):
-	read_rule()
+	match_pattern
 
 def url_decode(payload):
 	return urllib.unquote(payload).decode('utf8')
@@ -26,6 +26,13 @@ def read_rule():
 		lines = f.readlines()
 		for line in lines:
 			rules.append(line.rstrip("\r\n"))
+
+def match_pattern(payload):
+	pattern=r"(\'|\"| )|([\w|\'|\"]+[\'|\"|\;| |+|\#|])|(\-\-|\#|\;)"
+	result=re.match(pattern, payload)
+	if result != None:	
+		for group in re.match(pattern, payload).groups():
+			print payload
 
 def pkt_callback(pkt):
 	create_log_folder(INTERFACE)
@@ -77,13 +84,13 @@ def pkt_callback(pkt):
 			if payload.startswith("/?"):
 				args=payload.split("/?")[1].split("&")
 				for arg in args:
-					print url_decode(arg).split("=")[1]
+					match_pattern(url_decode(arg).split("=")[1])
 
 		if "POST" in http_method:
 			payload_length=len(data.split("\n"))
 			payload = data.split("\n")[payload_length-1].split("&")
 			for arg in args:
-				print url_decode(arg).split("=")[1]
+				match_pattern(url_decode(arg).split("=")[1])
 			
 def pingOfDeath(packet):
 	# Detect attempt to perform ping of death base on data size
