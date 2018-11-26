@@ -5,7 +5,8 @@ import netifaces, threading, logging, time, urllib, re
 import logging.handlers as handlers
 
 LOG_DIR= "/tmp/"
-RULE_FILE="/data/capstone1/oakenshield/rules.txt"
+TMP_LOG_DIR="/tmp/"
+RULE_FILE="/root/oakenshield/rules.txt"
 DATE=time.strftime("/%Y/%m/")
 LOG_FILE= time.strftime("%d.log")
 INTERFACE=""
@@ -16,7 +17,7 @@ def all_nics():
 	return netifaces.interfaces()
 
 def pkt_test(pkt):
-	match_pattern
+	pkt.show()
 
 def url_decode(payload):
 	return urllib.unquote(payload).decode('utf8')
@@ -28,11 +29,13 @@ def read_rule():
 			rules.append(line.rstrip("\r\n"))
 
 def match_pattern(payload):
+	payload = """%s"""%payload
 	pattern=r"(\'|\"| )|([\w|\'|\"]+[\'|\"|\;| |+|\#|])|(\-\-|\#|\;)"
 	result=re.match(pattern, payload)
 	if result != None:	
 		for group in re.match(pattern, payload).groups():
-			print payload
+			if group != None:
+				return payload
 
 def pkt_callback(pkt):
 	create_log_folder(INTERFACE)
@@ -78,19 +81,36 @@ def pkt_callback(pkt):
 	#Detect sql injection
 	if Raw in pkt:
 		data = pkt["Raw"].load
-		http_method = data.split("\n")[0]
+		http_method = data.split("\r\n")[0]
 		if "GET" in http_method:
 			payload = http_method.split(" ")[1]
 			if payload.startswith("/?"):
-				args=payload.split("/?")[1].split("&")
-				for arg in args:
-					match_pattern(url_decode(arg).split("=")[1])
-
+				if "&" in payload.split("/?")[1]:
+					args=payload.split("/?")[1].split("&")
+					for arg in args:
+						result = """%s""" %match_pattern(url_decode(arg.split("=",1)[1]))
+						if result != "None":
+							log = """%s -> %s .Payload: %s""" %(src_ip, src_dest, result)
+							name="SQL Injection - GET parameter"
+							log_to_file(INTERFACE, log, name)
+				else:
+					arg=payload.split("/?")[1]		
+					result = """%s""" %match_pattern(url_decode(arg.split("=",1)[1]))
+					print result
+					if result != "None":
+							log = """%s -> %s .Payload: %s""" %(src_ip, src_dest, result)
+							name="SQL Injection - GET parameter"
+							log_to_file(INTERFACE, log, name)
+					
 		if "POST" in http_method:
 			payload_length=len(data.split("\n"))
 			payload = data.split("\n")[payload_length-1].split("&")
 			for arg in args:
-				match_pattern(url_decode(arg).split("=")[1])
+				result = """%s""" %match_pattern(url_decode(arg.split("=",1)[1]))
+				if result != "None":
+						log = "%s -> %s .Payload: %s" %(src_ip, src_dest, result)
+						name="SQL Injection - POST parameter"
+						log_to_file(INTERFACE, log, name)
 			
 def pingOfDeath(packet):
 	# Detect attempt to perform ping of death base on data size
@@ -135,6 +155,6 @@ if __name__=="__main__":
     #  		target=sniff(iface=INTERFACE, prn=pkt_callback, filter="", store=0)
     #	)
 	#	th.start()
-	INTERFACE="lo"
+	INTERFACE="ens32"
 	read_rule()
 	sniff(iface=INTERFACE,prn=pkt_callback,filter="", store=0)
