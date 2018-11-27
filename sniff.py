@@ -145,6 +145,7 @@ def log_to_file(interface,payload,name):
 	logger.addHandler(fh)
     # Generate log data
 	logger.warn(payload)
+	fh.close()
 
 if __name__=="__main__":
 	#nics=all_nics()
