@@ -10,6 +10,7 @@ DATE=time.strftime("/%Y/%m/")
 LOG_FILE= time.strftime("%d.log")
 INTERFACE=""
 POD_PKT_ID = -1
+POD_PKT_SIZE = 0
 PACKETS=dict()
 rules=[]
 
