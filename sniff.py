@@ -14,6 +14,10 @@ rules=[]
 
 def all_nics():
 	return netifaces.interfaces()
+	
+def remove_duplicate(interface):
+	path = LOG_DIR + str(interface) + DATE + LOG_FILE
+	os.system("sort %s | uniq > %s" %(path, LOG_DIR + str(interface) + DATE +"log"))
 
 def pkt_test(pkt):
 	pkt.show()
@@ -118,7 +122,7 @@ def pkt_callback(pkt):
 					log = "%s -> %s.Param: %s .Payload: %s"%(src_ip, src_dest,payload.split("=",1)[0] ,result)
 					name="SQL Injection - POST param"
 					log_to_file(INTERFACE, log, name)
-					
+
 def pingOfDeath(packet):
 	# Detect attempt to perform ping of death base on data size
 	# If packet size is more than 1500 bytes, log it
@@ -154,10 +158,6 @@ def log_to_file(interface,payload,name):
 	logger.warn(payload)
 	fh.close()
 	remove_duplicate(interface)
-
-def remove_duplicate(interface):
-	path = LOG_DIR + str(interface) + DATE + LOG_FILE
-	os.system("sort %s | uniq > %s" %(path, LOG_DIR + str(interface) + DATE +"log"))
 
 if __name__=="__main__":
 	#nics=all_nics()
