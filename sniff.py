@@ -9,6 +9,7 @@ RULE_FILE="/root/oakenshield/rules.txt"
 DATE=time.strftime("/%Y/%m/")
 LOG_FILE= time.strftime("%d.log")
 INTERFACE=""
+POD_PKT_ID = -1
 PACKETS=dict()
 rules=[]
 
