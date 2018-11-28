@@ -1,11 +1,10 @@
 #!/usr/bin/python
 
 from scapy.all import *
-import netifaces, threading, logging, time, urllib, re
+import netifaces, threading, logging, time, urllib, re, os
 import logging.handlers as handlers
 
 LOG_DIR= "/tmp/"
-TMP_LOG_DIR="/tmp/"
 RULE_FILE="/root/oakenshield/rules.txt"
 DATE=time.strftime("/%Y/%m/")
 LOG_FILE= time.strftime("%d.log")
@@ -90,7 +89,7 @@ def pkt_callback(pkt):
 					for arg in args:
 						result = """%s""" %match_pattern(url_decode(arg.split("=",1)[1]))
 						if result != "None":
-							log = """%s -> %s .Payload: %s""" %(src_ip, src_dest, result)
+							log = """%s -> %s.Param: %s .Payload: %s""" %(src_ip, src_dest, arg.split("=",1)[0],result)
 							name="SQL Injection - GET parameter"
 							log_to_file(INTERFACE, log, name)
 				else:
@@ -98,20 +97,28 @@ def pkt_callback(pkt):
 					result = """%s""" %match_pattern(url_decode(arg.split("=",1)[1]))
 					print result
 					if result != "None":
-							log = """%s -> %s .Payload: %s""" %(src_ip, src_dest, result)
+							log = """%s -> %s.Param: %s .Payload: %s""" %(src_ip, src_dest, arg.split("=",1)[0],result)
 							name="SQL Injection - GET parameter"
 							log_to_file(INTERFACE, log, name)
 					
 		if "POST" in http_method:
 			payload_length=len(data.split("\n"))
-			payload = data.split("\n")[payload_length-1].split("&")
-			for arg in args:
-				result = """%s""" %match_pattern(url_decode(arg.split("=",1)[1]))
-				if result != "None":
-						log = "%s -> %s .Payload: %s" %(src_ip, src_dest, result)
-						name="SQL Injection - POST parameter"
+			payload = data.split("\n")[payload_length-1]
+			if "&" in payload:
+				args = payload.split("&")
+				for arg in args:
+					result = """%s""" %match_pattern(url_decode(arg.split("=",1)[1]))
+					if result != "None":
+						log = """%s -> %s.Param: %s .Payload: %s""" %(src_ip, src_dest, arg.split("=",1)[0],result)
+						name="SQL Injection - POST param"
 						log_to_file(INTERFACE, log, name)
-			
+			else:
+				result = """%s"""%match_pattern(url_decode(payload.split("=",1)[1]))
+				if result != "None":
+					log = "%s -> %s.Param: %s .Payload: %s"%(src_ip, src_dest,payload.split("=",1)[0] ,result)
+					name="SQL Injection - POST param"
+					log_to_file(INTERFACE, log, name)
+					
 def pingOfDeath(packet):
 	# Detect attempt to perform ping of death base on data size
 	# If packet size is more than 1500 bytes, log it
@@ -146,6 +153,11 @@ def log_to_file(interface,payload,name):
     # Generate log data
 	logger.warn(payload)
 	fh.close()
+	remove_duplicate(interface)
+
+def remove_duplicate(interface):
+	path = LOG_DIR + str(interface) + DATE + LOG_FILE
+	os.system("sort %s | uniq > %s" %(path, LOG_DIR + str(interface) + DATE +"log"))
 
 if __name__=="__main__":
 	#nics=all_nics()
