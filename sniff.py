@@ -124,14 +124,20 @@ def pkt_callback(pkt):
 					log_to_file(INTERFACE, log, name)
 
 def pingOfDeath(packet):
-	# Detect attempt to perform ping of death base on data size
-	# If packet size is more than 1500 bytes, log it
-	if packet.len > 1500:
-		ip_src=packet.src
-		ip_dst=packet.dst
-		log="%s -> %s Size: %s " %(ip_src, ip_dst, str(packet.len))
-		name="Ping Of Death"
-		log_to_file(INTERFACE,log, name)
+	global POD_PKT_ID
+	global POD_PKT_SIZE
+
+	ip_pkt = packet['IP']
+	flags = packet.sprintf('%IP.flags%')
+
+	if ip_pkt.len >= 1500 and flags == 'MF' and ip_pkt.frag == 0 and ICMP in packet and packet['ICMP'].type == 0:
+		POD_PKT_ID = ip_pkt.id
+	elif flags == '' and ip_pkt.id == POD_PKT_ID:
+		POD_PKT_ID = -1
+		POD_PKT_SIZE += ip_pkt.len
+		log = "%s -> %s" % (ip_pkt.dst, ip_pkt.src)
+		name = "Ping Of Death"
+		log_to_file(INTERFACE, log, name)
 
 def create_log_folder(interface):
 	path = LOG_DIR + str(interface) + DATE
