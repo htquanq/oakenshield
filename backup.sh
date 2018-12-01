@@ -62,7 +62,8 @@ check_commands(){
         [ ! -x $FIND ] && close_on_error "Executable $FIND not found."
         [ ! -x $MYSQLADMIN ] && close_on_error "Executable $MYSQLADMIN not found."
         [ ! -x $SCP ] && close_on_error "Executable $SCP not found."
-        [ ! -x $FIND ] && close_on_error "Executable $FIND not found".
+        [ ! -x $FIND ] && close_on_error "Executable $FIND not found."
+        [ ! -x $SSH ] && close_on_error "Executable $SSH not found."
 }
 
 check_mysql_connection(){
@@ -79,6 +80,7 @@ sftp_backup(){
 clean_backup(){
         #Delete backup file that is more than 30 days old
         $FIND "$FILEPATH" -type f -mtime +30 -delete
+        $SSH -i ${IDENTITY_FILE} -p ${SFTP_PORT} ${SFTP_USERNAME}@${SFTP_HOST}  -t "$FIND ${FILEPATH} -type f -mtime +30 -delete"
 }
 
 #main
